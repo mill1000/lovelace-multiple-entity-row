@@ -43,8 +43,8 @@ export const entityStateDisplay = (hass, stateObj, config) => {
         config.unit === false
             ? undefined
             : config.attribute !== undefined
-                ? config.unit
-                : config.unit || stateObj.attributes.unit_of_measurement;
+            ? config.unit
+            : config.unit || stateObj.attributes.unit_of_measurement;
 
     if (config.format) {
         if (isNaN(parseFloat(value)) || !isFinite(value)) {
@@ -102,6 +102,6 @@ export const entityStateDisplay = (hass, stateObj, config) => {
 export const entityStyles = (config) =>
     isObject(config?.styles)
         ? Object.keys(config.styles)
-            .map((key) => `${key}: ${config.styles[key]};`)
-            .join('')
+        .map((key) => `${key}: ${config.styles[key]};`)
+        .join('')
         : '';
