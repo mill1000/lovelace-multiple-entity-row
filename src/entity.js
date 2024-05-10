@@ -25,8 +25,17 @@ export const entityName = (stateObj, config) => {
 };
 
 export const entityStateDisplay = (hass, stateObj, config) => {
+
+    // Check if hass object supports formatting functions introduced in 2023.9
+    let hassFormatEntityState = typeof hass.formatEntityState === 'function';
+    let hassFormatEntityAttributeValue = typeof hass.formatEntityAttributeValue === 'function';
+
     if (isUnavailable(stateObj)) {
-        return hass.localize(`state.default.${stateObj.state}`);
+        if (hassFormatEntityState) {
+            return hass.formatEntityState(stateObj);
+        } else {
+            return hass.localize(`state.default.${stateObj.state}`);
+        }
     }
 
     let value = config.attribute ? stateObj.attributes[config.attribute] : stateObj.state;
@@ -72,18 +81,27 @@ export const entityStateDisplay = (hass, stateObj, config) => {
         return `${value}${unit ? ` ${unit}` : ''}`;
     }
 
-    if (config.attribute) {
-        return `${isNaN(value) ? value : formatNumber(value, hass.locale)}${unit ? ` ${unit}` : ''}`;
-    }
-
+    // Create modified entity state with new unit of measure
     const modifiedStateObj = { ...stateObj, attributes: { ...stateObj.attributes, unit_of_measurement: unit } };
 
-    return computeStateDisplay(hass.localize, modifiedStateObj, hass.locale, hass.entities);
+    if (config.attribute) {
+        if (hassFormatEntityAttributeValue) {
+            return hass.formatEntityAttributeValue(modifiedStateObj, config.attribute);
+        } else {
+            return `${isNaN(value) ? value : formatNumber(value, hass.locale)}${unit ? ` ${unit}` : ''}`;
+        }
+    }
+
+    if (hassFormatEntityState) {
+        return hass.formatEntityState(modifiedStateObj);
+    } else {
+        return computeStateDisplay(hass.localize, modifiedStateObj, hass.locale, hass.entities);
+    }
 };
 
 export const entityStyles = (config) =>
     isObject(config?.styles)
         ? Object.keys(config.styles)
-              .map((key) => `${key}: ${config.styles[key]};`)
-              .join('')
+            .map((key) => `${key}: ${config.styles[key]};`)
+            .join('')
         : '';
